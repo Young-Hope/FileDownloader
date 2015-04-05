@@ -16,7 +16,7 @@ public class DownloadTask implements Runnable{
 	
 	private int mThreadId;
 	private long mBlockSize;
-	private long mDownloadLength = 0;
+	private long mDownloadLength;
 	private boolean mFinish = false;
 	private String mUrl;
 	
@@ -24,17 +24,17 @@ public class DownloadTask implements Runnable{
 	private FileDownloadExecutor mExecutor;
 	
 	public DownloadTask(FileDownloadExecutor executor, String url,
-			int threadId, File file, long blockSize) {
+			int threadId, File file, long blockSize, long downloadLength) {
 		mExecutor = executor;
 		mUrl = url;
 		mThreadId = threadId;
 		mFile = file;
 		mBlockSize = blockSize;
+		mDownloadLength = downloadLength;
 	}
 	
 	@Override
 	public void run() {
-		Log.d("debug", "thread:" + mThreadId);
 		if (mDownloadLength >= mBlockSize) {
 			return;
 		}

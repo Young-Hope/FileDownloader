@@ -44,7 +44,7 @@ public class MainActivity extends ActionBarActivity {
         	.build();
         downloader = new FileDownloader(configuration);
         
-        editText.setText("http://192.168.191.1:8080/ServerForPicture/yingmu.png");
+        editText.setText("http://192.168.191.1:8080/ServerForPicture/music.mp3");
         
         startDownload.setOnClickListener(new StartListener());
         stopDownload.setOnClickListener(new StopListener());
@@ -70,9 +70,9 @@ public class MainActivity extends ActionBarActivity {
 		@Override
 		public void onDownloadComplete() {
 			Log.d("debug", "onDownloadComplete");
-			progressBar.setProgress(100);
-			resultView.setText(100+"");
-			Toast.makeText(getApplicationContext(), "download success", Toast.LENGTH_LONG).show();
+//			progressBar.setProgress(100);
+//			resultView.setText(100+"");
+//			Toast.makeText(getApplicationContext(), "download success", Toast.LENGTH_LONG).show();
 		}
 
 		@Override

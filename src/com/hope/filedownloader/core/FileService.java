@@ -5,66 +5,88 @@ import java.util.Map;
 
 import android.content.Context;
 import android.database.Cursor;
-import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 
-public class FileService {
 
-	private DBOpenHelper mHelper;
-	
+/**
+ * 业务bean
+ * 
+ */
+public class FileService {
+	private DBOpenHelper openHelper;
+
 	public FileService(Context context) {
-		mHelper = new DBOpenHelper(context);
+		openHelper = new DBOpenHelper(context);
 	}
-	
-	public void insertData(String url, Map<Integer, Long> data) {
-		SQLiteDatabase db = getWritableDatabase();
-		db.beginTransaction();
-		try {
-			for (Map.Entry<Integer, Long> entry : data.entrySet()) {
-				db.execSQL("insert into fileRecord(url, threadId, length), value(?,?,?)",
-						new Object[]{url, entry.getKey(), entry.getValue()});
-			}
-			db.setTransactionSuccessful();
-		} catch (SQLException e) {
-			e.printStackTrace();
-		} finally {
-			db.endTransaction();
-			db.close();
-		}
-	}
-	
-	public Map<Integer, Long> getData(String url){
+
+	/**
+	 * 获取每条线程已经下载的文件长度
+	 * 
+	 * @param path
+	 * @return
+	 */
+	public Map<Integer, Long> getData(String path) {
+		SQLiteDatabase db = openHelper.getReadableDatabase();
+		Cursor cursor = db
+				.rawQuery(
+						"select threadid, downlength from filedownlog where downpath=?",
+						new String[] { path });
 		Map<Integer, Long> data = new HashMap<Integer, Long>();
-		SQLiteDatabase db = getReadableDatabase();
-		Cursor cursor = db.rawQuery("select threadId, length from fileRecord where url = ?", new String[]{url});
-		cursor.moveToFirst();
-		while (!cursor.isAfterLast()) {
-			data.put(cursor.getInt(cursor.getColumnIndex("threadId")),
-					cursor.getLong(cursor.getColumnIndex("length")));
+		while (cursor.moveToNext()) {
+			data.put(cursor.getInt(0), cursor.getLong(1));
 		}
 		cursor.close();
 		db.close();
 		return data;
 	}
-	
-	public void updateData(String url, int threadId, long length) {
-		SQLiteDatabase db = getWritableDatabase();
-		db.execSQL("update fileRecord set length = ? where url = ? and threadId = ?",
-				new Object[]{length, url, threadId});
+
+	/**
+	 * 保存每条线程已经下载的文件长度
+	 * 
+	 * @param path
+	 * @param map
+	 */
+	public void insertData(String path, Map<Integer, Long> map) {// int threadid,
+																// int position
+		SQLiteDatabase db = openHelper.getWritableDatabase();
+		db.beginTransaction();
+		try {
+			for (Map.Entry<Integer, Long> entry : map.entrySet()) {
+				db.execSQL(
+						"insert into filedownlog(downpath, threadid, downlength) values(?,?,?)",
+						new Object[] { path, entry.getKey(), entry.getValue() });
+			}
+			db.setTransactionSuccessful();
+		} finally {
+			db.endTransaction();
+		}
 		db.close();
 	}
-	
-	public void deleteData(String url) {
-		SQLiteDatabase db = getWritableDatabase();
-		db.execSQL("delete from fileRecord where url = ?", new Object[]{url});
+
+	/**
+	 * 实时更新每条线程已经下载的文件长度
+	 * 
+	 * @param path
+	 * @param map
+	 */
+	public void updateData(String path, int threadId, long pos) {
+		SQLiteDatabase db = openHelper.getWritableDatabase();
+		db.execSQL(
+				"update filedownlog set downlength=? where downpath=? and threadid=?",
+				new Object[] { pos, path, threadId });
 		db.close();
 	}
-	
-	private SQLiteDatabase getWritableDatabase() {
-		return mHelper.getWritableDatabase();
+
+	/**
+	 * 当文件下载完成后，删除对应的下载记录
+	 * 
+	 * @param path
+	 */
+	public void deleteData(String path) {
+		SQLiteDatabase db = openHelper.getWritableDatabase();
+		db.execSQL("delete from filedownlog where downpath=?",
+				new Object[] { path });
+		db.close();
 	}
-	
-	private SQLiteDatabase getReadableDatabase() {
-		return mHelper.getReadableDatabase();
-	}
+
 }

@@ -74,13 +74,16 @@ public class FileDownloadExecutor {
 				// if db has download record
 				if (log.size() > 0) {
 					for (Map.Entry<Integer, Long> entry : log.entrySet()) {
-						mDownloadedSize += entry.getValue();
 						mCache.put(entry.getKey(), entry.getValue());
 					}
 				}
-				
-				// calculate block size.
 				int threadPoolSize = mConfiguration.getmThreadPoolsize();
+				if (mCache.size() == threadPoolSize) {
+					for (int i = 0; i < threadPoolSize; i++) {
+						mDownloadedSize += mCache.get(i);
+					}
+				}
+				// calculate block size.
 				mBlockSize = mFileSize % threadPoolSize == 0
 						? mFileSize / threadPoolSize
 						: mFileSize / threadPoolSize + 1;
@@ -107,9 +110,11 @@ public class FileDownloadExecutor {
 	}
 	
 	public void download() throws Exception {
-		RandomAccessFile raf = new RandomAccessFile(mSaveFile, "rw");
-		raf.setLength(mFileSize);
-		raf.close();
+		if (!mSaveFile.exists()) {
+			RandomAccessFile raf = new RandomAccessFile(mSaveFile, "rw");
+			raf.setLength(mFileSize);
+			raf.close();
+		}
 		
 		int threadPoolSize = mConfiguration.getmThreadPoolsize();
 		if (mCache.size() != threadPoolSize) {
@@ -135,7 +140,7 @@ public class FileDownloadExecutor {
 		for (int i = 0; i < threadPoolSize; i++) {
 			Long downloadLength = mCache.get(i); 
 			if (downloadLength < mBlockSize && downloadLength < mFileSize) {
-				mTasks[i] = new DownloadTask(this, mUrlStr, i, mSaveFile, mBlockSize);  
+				mTasks[i] = new DownloadTask(this, mUrlStr, i, mSaveFile, mBlockSize, mCache.get(i));  
 				executor.execute(mTasks[i]);
 			} else {
 				mTasks[i] = null;
@@ -144,9 +149,10 @@ public class FileDownloadExecutor {
 		
 		mFileService.deleteData(mUrlStr);
 		mFileService.insertData(mUrlStr, mCache);
+		
 		boolean finished = false;
 		while (!finished) {
-			Thread.sleep(1000);
+			Thread.sleep(700);
 			// suppose all task has finished the work.
 			finished = true;
 			for (int i = 0; i < threadPoolSize; i++) {
@@ -156,7 +162,7 @@ public class FileDownloadExecutor {
 						Log.d("debug", "Thread:" + i + " restart");
 						mTasks[i].setFinish(true);
 						mTasks[i] = null;
-						mTasks[i]= new DownloadTask(this, mUrlStr, i, mSaveFile, mBlockSize);
+						mTasks[i]= new DownloadTask(this, mUrlStr, i, mSaveFile, mBlockSize, mCache.get(i));
 						executor.execute(mTasks[i]);
 					}
 				}
@@ -192,6 +198,7 @@ public class FileDownloadExecutor {
 	}
 	
 	protected synchronized void update(int threadId, long length){
+		mCache.put(threadId, length);
 		mFileService.updateData(mUrlStr, threadId, length);
 	}
 	
