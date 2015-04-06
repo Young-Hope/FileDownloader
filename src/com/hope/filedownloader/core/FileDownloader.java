@@ -15,7 +15,7 @@ public class FileDownloader {
 		if (configuration == null) {
 			throw new IllegalArgumentException(ERROR_INIT_CONFIG_WITH_NULL);
 		}
-		if (this.mConfiguration == null) {
+		if (this.mConfiguration != null) {
 			this.mConfiguration = configuration;
 		}
 	}
