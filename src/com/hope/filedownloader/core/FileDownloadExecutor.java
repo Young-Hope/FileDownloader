@@ -183,18 +183,19 @@ public class FileDownloadExecutor {
 		// download is finish.
 		if (mDownloadedSize >= mFileSize) {
 			mFileService.deleteData(mUrlStr);
+			
+			if (mListener != null) {
+				Runnable complete = new Runnable() {
+					
+					@Override
+					public void run() {
+						mListener.onDownloadComplete();
+					}
+				};
+				mConfiguration.getHandler().post(complete);
+			}
 		}
 		
-		if (mListener != null) {
-			Runnable complete = new Runnable() {
-				
-				@Override
-				public void run() {
-					mListener.onDownloadComplete();
-				}
-			};
-			mConfiguration.getHandler().post(complete);
-		}
 	}
 	
 	protected synchronized void update(int threadId, long length){

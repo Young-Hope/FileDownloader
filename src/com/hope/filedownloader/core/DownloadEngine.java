@@ -19,7 +19,7 @@ public class DownloadEngine implements Runnable{
 		mConfiguration = configuration;
 		mListener = listener;
 	}
-	
+
 	@Override
 	public void run() {
 		mExecutor = new FileDownloadExecutor(mUrl, mPath, mConfiguration, mListener);

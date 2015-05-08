@@ -42,8 +42,3 @@ downloader.downloadFile(url, path, new FileDownloadListener(){
 
 ```
 
-
-##2已知bug
-1. 下载还未完成的时候停止任务会调用`onDownloadComplete`回调函数。
-2. 连续两次调用下载任务会出现问题
-
